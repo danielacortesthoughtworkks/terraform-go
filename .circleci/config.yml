@@ -1,13 +1,16 @@
 version: 2
 jobs:
-  validate_terraform: 
-    docker: 
-      - image: hashicorp/terraform 
-      steps: 
-        - checkout 
-        - run: 
-          name: Validate Terraform Formatting 
-          command: "[ -z "$(terraform fmt -write=false)" ] || { terraform fmt -write=false -diff; exit 1; }"
+  validate_terraform:
+    docker:
+      - image: hashicorp/terraform
+    steps:
+      - checkout
+      - run: # Install the AWS CLI if it is not already included in the docker image
+           name: Install awscli 
+           command: sudo pip install awscli
+      - run:
+          name: Validate Terraform Formatting
+          command: "[ -z \"$(terraform fmt -write=false)\" ] || { terraform fmt -write=false -diff; exit 1; }"
   build:
     working_directory: /go/src/github.com/mrojasb2000/go-template
     docker:
@@ -20,6 +23,14 @@ jobs:
       - run:
           name: "Run Unit Tests"
           command: go test
+  deploy:
+    docker:
+      - image: hashicorp/terraform
+    steps:
+      - checkout
+      - run:
+          name: Initialize Terraform
+          command: cd terraform && terraform init
 
   integration:
     docker:
@@ -50,6 +61,7 @@ workflows:
     jobs:
       - validate_terraform
       - build
+      - deploy
       - integration:
           requires:
             - build
