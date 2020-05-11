@@ -1,0 +1,46 @@
+version: 2
+jobs:
+  build:
+    working_directory: /go/src/github.com/mrojasb2000/go-template
+    docker:
+      - image: circleci/golang:1.9
+    steps:
+      - checkout
+      - run:
+          name: "Print go version"
+          command: go version
+      - run:
+          name: "Run Unit Tests"
+          command: go test
+
+  integration:
+    docker:
+      - image: cypress/base:8
+        environment:
+          ## this enables colors in the output
+          TERM: xterm
+    steps:
+      - checkout
+      # special step to restore the dependency cache
+      - restore_cache:
+          key: v2-{{ checksum "package.json" }}
+      - run: npm install
+      # special step to save the dependency cache
+      - save_cache:
+          key: v2-{{ checksum "package.json" }}
+          paths:
+            - ~/.npm
+            - ~/.cache
+      - run: 
+          name: "Run Integration Tests"
+          command: npm test
+  
+
+workflows:
+  version: 2
+  build_integration_and_deploy:
+    jobs:
+      - build
+      - integration:
+          requires:
+            - build
