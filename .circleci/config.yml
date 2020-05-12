@@ -31,6 +31,9 @@ jobs:
       - run:
           name: Initialize Terraform
           command: cd terraform && terraform init
+      - run:
+          name: Plan Terraform
+          command: cd terraform && terraform plan
 
   integration:
     docker:
